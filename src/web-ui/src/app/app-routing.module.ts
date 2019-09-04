@@ -7,7 +7,7 @@ const routes: Routes = [
         children: [
             {
                 path: '',
-                loadChildren: 'src/app/features/board#BoardModule'
+                loadChildren: 'src/app/features/game#GameModule'
             }
         ]
     }

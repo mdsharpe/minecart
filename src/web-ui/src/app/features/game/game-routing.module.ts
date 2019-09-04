@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { BoardShellComponent } from './containers/board-shell/board-shell.component';
+import { GameShellComponent } from './containers/game-shell/game-shell.component';
 
 const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    component: BoardShellComponent
+    component: GameShellComponent
   }
 ];
 
@@ -14,4 +14,4 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]
 })
-export class BoardRoutingModule { }
+export class GameRoutingModule { }
