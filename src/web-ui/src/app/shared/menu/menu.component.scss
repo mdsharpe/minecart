@@ -1,0 +1,39 @@
+$menu-width: 25vw;
+$button-height: 9vh;
+
+:host {
+    position: absolute;
+    top: (100vh - $button-height);
+    left: calc(-25vw + 3rem);
+    height: 100vh;
+    width: $menu-width;
+    background: rgba(0, 0, 0, 0.85);
+    border-top-right-radius: 0.5rem;
+    box-shadow: 0 0 .66vw rgba(255,255,255,0.4);
+    z-index: 500;
+    transition: top ease .3s, left ease .3s;
+
+    &:hover {
+        box-shadow: 0 0 1vw #fff;
+    }
+
+    &.menu-open {
+        top: 0;
+        left: 0;
+        border-top-right-radius: 0;
+    }
+}
+
+.burger-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    line-height: $button-height;
+    padding: 0;
+    width: 3rem;
+    height: $button-height;
+    font-size: 2rem;
+    border: 0 none;
+    background: transparent;
+    cursor: pointer;
+}
