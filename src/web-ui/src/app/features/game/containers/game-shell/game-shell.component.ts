@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Engine, Render, Bodies, World } from 'matter-js';
+import { Engine, Render, Bodies, World, Body, Composites, Composite, Vector, Vertices } from 'matter-js';
 
 @Component({
     selector: 'app-game',
@@ -32,12 +32,16 @@ export class GameShellComponent implements OnInit, OnDestroy {
             });
 
             // create two boxes and a ground
+            var cart = this.createCart(100, 100);
+            console.log(cart);
             var boxA = Bodies.rectangle(400, 200, 80, 80);
             var boxB = Bodies.rectangle(450, 50, 80, 80);
-            var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+            var ground = Bodies.rectangle(400, 550, 700, 60, { isStatic: true });
+            Body.rotate(ground, 0.2);
 
             // add all of the bodies to the world
-            World.add(engine.world, [boxA, boxB, ground]);
+            World.add(engine.world, [ground, boxA, boxB]);
+            World.add(engine.world, [cart]);
 
             // run the engine
             Engine.run(engine);
@@ -50,5 +54,17 @@ export class GameShellComponent implements OnInit, OnDestroy {
     public ngOnDestroy(): void {
         this.unsubscribe$.next();
         this.unsubscribe$.complete();
+    }
+
+    private createCart(x: number, y: number): Composite {
+        const bodyVertices : Vector[] = [
+            { x: 0, y: 0},
+            { x: 5, y: 0}
+        ];
+        const body = Bodies.fromVertices(x, y, [bodyVertices])
+
+        return Composite.create({
+            bodies: []
+        });
     }
 }
