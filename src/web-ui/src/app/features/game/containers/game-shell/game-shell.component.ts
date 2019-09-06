@@ -35,7 +35,7 @@ export class GameShellComponent implements OnInit, OnDestroy {
     }
 
     @HostListener('window:resize', ['$event'])
-    private onResize(evt: Event): void {
+    public onResize(evt: Event): void {
         this.fitToScreen();
     }
 
