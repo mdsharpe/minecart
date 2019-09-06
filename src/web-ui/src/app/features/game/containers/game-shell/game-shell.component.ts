@@ -17,6 +17,7 @@ export class GameShellComponent implements OnInit, OnDestroy {
 
     private _engine: Engine | null = null;
     private _render: Render | null = null;
+    private _cart: Composite | null = null;
 
     @ViewChild("worldContainer", { static: true })
     private _worldContainer: ElementRef | null = null;
@@ -60,21 +61,28 @@ export class GameShellComponent implements OnInit, OnDestroy {
             options: renderOptions
         });
 
-        const cart = this.createCart(150, 30, 40, 30, 10, 3, 10);
+        this._cart = this.createCart(150, 30, 40, 30, 10, 3, 10);
         const ground = this.createGround(300, 10000);
 
-        World.add(this._engine.world, [ground, cart]);
+        World.add(this._engine.world, [ground, this._cart]);
 
         Events.on(this._engine, 'beforeTick', () => {
-            if (this._render) {
+            if (this._render && this._cart) {
                 Bounds.shift(
                     this._render.bounds,
                     {
-                        x: cart.bodies[0].position.x - window.innerWidth / 4,
-                        y: cart.bodies[0].position.y - window.innerHeight / 2
+                        x: this._cart.bodies[0].position.x - window.innerWidth / 4,
+                        y: this._cart.bodies[0].position.y - window.innerHeight / 2
                     });
             }
         });
+
+        Events.on(this._engine, 'afterUpdate', (e: Body) => {
+            if (this._cart) {
+                this._cart.bodies[1].torque = 0.003;
+                this._cart.bodies[2].torque = 0.003;
+            }
+        })
 
         this.fitToScreen();
 
@@ -88,7 +96,7 @@ export class GameShellComponent implements OnInit, OnDestroy {
         const thickness = 20;
         const baseWidth = 200;
         const vWidth = 100;
-        let vY = 100;
+        let vY = 50;
 
         let x = 0;
 
@@ -103,14 +111,15 @@ export class GameShellComponent implements OnInit, OnDestroy {
                 { x: 0, y: thickness }
             ];
 
-            const segment = Bodies.fromVertices(x, y, [segmentVertices], {
-                isStatic: true
+            const segment = Bodies.fromVertices(x + (width / 2), y + (deltaY / 2), [segmentVertices], {
+                isStatic: true,
+                frictionStatic: 1
             });
 
             segments.push(segment);
             x += width;
             y += deltaY;
-            vY++;
+            vY += 5;
         } while (x <= width);
 
         return Composite.create({
