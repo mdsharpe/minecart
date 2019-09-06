@@ -1,0 +1,26 @@
+version: 0.0.{build}
+
+image: Ubuntu1804
+
+environment:
+  nodejs_version: 12
+
+install:
+  - nvm install $nodejs_version
+  - npm i -g npm
+  - npm i -g @angular/cli@latest
+
+build_script:
+  - cd src/web-ui
+  - npm ci
+  - ng build --prod
+  - cd ../..
+  
+artifacts:
+  - path: src/web-ui/dist/web-ui
+    name: web-ui
+
+deploy:
+  provider: Environment
+  name: mdsharpe-minecart
+  remove_files: true
