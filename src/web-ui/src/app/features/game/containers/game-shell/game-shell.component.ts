@@ -18,6 +18,9 @@ export class GameShellComponent implements OnInit, OnDestroy {
     private _engine: Engine | null = null;
     private _render: Render | null = null;
     private _cart: Composite | null = null;
+    private _torque: number = 0;
+
+    private _coinCreateTimeoutId: number | null = null;
 
     @ViewChild("worldContainer", { static: true })
     private _worldContainer: ElementRef | null = null;
@@ -61,10 +64,11 @@ export class GameShellComponent implements OnInit, OnDestroy {
             options: renderOptions
         });
 
-        this._cart = this.createCart(150, 30, 40, 30, 10, 3, 10);
-        const ground = this.createGround(300, 10000);
+        const ground = this.createGround(0, 0, 50000);
+        this._cart = this.createCart(50, -100, 40, 30, 10, 3, 10);
 
-        World.add(this._engine.world, [ground, this._cart]);
+        World.add(this._engine.world, ground);
+        World.add(this._engine.world, this._cart);
 
         Events.on(this._engine, 'beforeTick', () => {
             if (this._render && this._cart) {
@@ -79,8 +83,8 @@ export class GameShellComponent implements OnInit, OnDestroy {
 
         Events.on(this._engine, 'afterUpdate', (e: Body) => {
             if (this._cart) {
-                this._cart.bodies[1].torque = 0.003;
-                this._cart.bodies[2].torque = 0.003;
+                this._cart.bodies[1].torque = this._torque;
+                this._cart.bodies[2].torque = this._torque;
             }
         })
 
@@ -88,17 +92,20 @@ export class GameShellComponent implements OnInit, OnDestroy {
 
         Engine.run(this._engine);
         Render.run(this._render);
+
+        this.addCoins(50, -100, 15, 1000, 100)
+            .then(() => {
+                this._torque = 0.008;
+            })
     }
 
-    private createGround(y: number, width: number): Composite {
+    private createGround(x: number, y: number, width: number): Composite {
         const segments: Body[] = [];
 
         const thickness = 20;
         const baseWidth = 200;
         const vWidth = 100;
-        let vY = 50;
-
-        let x = 0;
+        let vY = 0;
 
         do {
             const width = baseWidth + ((Math.random() * vWidth) - (vWidth / 2))
@@ -158,7 +165,9 @@ export class GameShellComponent implements OnInit, OnDestroy {
     }
 
     private createCartWheel(x: number, y: number, radius: number, body: Body): { wheel: Body, constraint: Constraint } {
-        const wheel = Bodies.circle(x, y + (radius * 1.5), radius);
+        const wheel = Bodies.circle(x, y + (radius * 1.5), radius, {
+            friction: 1
+        });
 
         const bodyCenter = body.position;
 
@@ -169,5 +178,50 @@ export class GameShellComponent implements OnInit, OnDestroy {
         });
 
         return { wheel, constraint };
+    }
+
+    private addCoins(x: number, y: number, quantity: number, delay: number, interval: number): Promise<void> {
+        return new Promise<void>((resolve) => {
+            let count = 0;
+
+            let clearCoinTimeout = () => {
+                if (this._coinCreateTimeoutId) {
+                    window.clearTimeout(this._coinCreateTimeoutId);
+                }
+
+                this._coinCreateTimeoutId = null;
+            };
+
+            let createCoin: () => void;
+
+            const scheduleCoinCreation = (timeout: number) => {
+                clearCoinTimeout();
+
+                this._coinCreateTimeoutId = window.setTimeout(() => {
+                    createCoin();
+                }, timeout)
+            };
+
+            createCoin = () => {
+                clearCoinTimeout();
+
+                if (!this._engine) {
+                    return;
+                }
+
+                const coin = Bodies.circle(x, y, 5);
+                World.add(this._engine.world, coin);
+                count++;
+
+                if (count < quantity) {
+                    scheduleCoinCreation(interval);
+                }else {
+                    resolve();
+                }
+            };
+
+            clearCoinTimeout();
+            scheduleCoinCreation(delay);
+        });
     }
 }
