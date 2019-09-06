@@ -1,7 +1,7 @@
-import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Engine, Render, Bodies, World, Body, Composites, Composite, Vector, Vertices, Constraint } from 'matter-js';
+import { Engine, Render, Bodies, World, Body, Composites, Composite, Vector, Vertices, Constraint, Events, Bounds } from 'matter-js';
 
 @Component({
     selector: 'app-game',
@@ -11,52 +11,111 @@ import { Engine, Render, Bodies, World, Body, Composites, Composite, Vector, Ver
     providers: []
 })
 export class GameShellComponent implements OnInit, OnDestroy {
-    constructor(
-    ) {
-    }
+    constructor() { }
 
     private readonly unsubscribe$ = new Subject<void>();
+
+    private _engine: Engine | null = null;
+    private _render: Render | null = null;
 
     @ViewChild("worldContainer", { static: true })
     private _worldContainer: ElementRef | null = null;
 
     public ngOnInit(): void {
-        if (this._worldContainer) {
-            // create an engine
-            var engine = Engine.create();
-
-            var renderOptions: any = {
-                showAngleIndicator: true
-            };
-
-            // create a renderer
-            var render = Render.create({
-                element: this._worldContainer.nativeElement,
-                engine: engine,
-                options: renderOptions
-            });
-
-            // create two boxes and a ground
-            var cart = this.createCart(150, 100, 40, 30, 10, 3, 10);
-            console.log(cart);
-            var ground = Bodies.rectangle(400, 550, 700, 60, { isStatic: true });
-            Body.rotate(ground, 0.4);
-
-            // add all of the bodies to the world
-            World.add(engine.world, [ground]);
-            World.add(engine.world, [cart]);
-
-            // run the engine
-            Engine.run(engine);
-
-            // run the renderer
-            Render.run(render);
-        }
+        this.initWorld();
     }
 
     public ngOnDestroy(): void {
         this.unsubscribe$.next();
         this.unsubscribe$.complete();
+    }
+
+    @HostListener('window:resize', ['$event'])
+    private onResize(evt: Event): void {
+        this.fitToScreen();
+    }
+
+    private fitToScreen(): void {
+        if (this._render) {
+            this._render.canvas.width = window.innerWidth;
+            this._render.canvas.height = window.innerHeight;
+        }
+    }
+
+    private initWorld(): void {
+        this._engine = Engine.create();
+
+        var renderOptions = {
+            showAngleIndicator: true,
+            showVelocity: true,
+            showCollisions: true,
+            hasBounds: true,
+            width: 1200,
+            height: 700
+        };
+
+        this._render = Render.create({
+            element: this._worldContainer!.nativeElement,
+            engine: this._engine,
+            options: renderOptions
+        });
+
+        const cart = this.createCart(150, 30, 40, 30, 10, 3, 10);
+        const ground = this.createGround(300, 10000);
+
+        World.add(this._engine.world, [ground, cart]);
+
+        Events.on(this._engine, 'beforeTick', () => {
+            if (this._render) {
+                Bounds.shift(
+                    this._render.bounds,
+                    {
+                        x: cart.bodies[0].position.x - window.innerWidth / 4,
+                        y: cart.bodies[0].position.y - window.innerHeight / 2
+                    });
+            }
+        });
+
+        this.fitToScreen();
+
+        Engine.run(this._engine);
+        Render.run(this._render);
+    }
+
+    private createGround(y: number, width: number): Composite {
+        const segments: Body[] = [];
+
+        const thickness = 20;
+        const baseWidth = 200;
+        const vWidth = 100;
+        let vY = 100;
+
+        let x = 0;
+
+        do {
+            const width = baseWidth + ((Math.random() * vWidth) - (vWidth / 2))
+            const deltaY = (Math.random() * vY) - (vY / 2);
+
+            const segmentVertices: Vector[] = [
+                { x: 0, y: 0 },
+                { x: width, y: deltaY },
+                { x: width, y: deltaY + thickness },
+                { x: 0, y: thickness }
+            ];
+
+            const segment = Bodies.fromVertices(x, y, [segmentVertices], {
+                isStatic: true
+            });
+
+            segments.push(segment);
+            x += width;
+            y += deltaY;
+            vY++;
+        } while (x <= width);
+
+        return Composite.create({
+            bodies: segments
+        });
     }
 
     private createCart(
@@ -97,8 +156,7 @@ export class GameShellComponent implements OnInit, OnDestroy {
         const constraint = Constraint.create({
             bodyA: body,
             pointA: { x: x - bodyCenter.x, y: (y - bodyCenter.y) + radius * 1.5 },
-            bodyB: wheel,
-            stiffness: 0.2
+            bodyB: wheel
         });
 
         return { wheel, constraint };
