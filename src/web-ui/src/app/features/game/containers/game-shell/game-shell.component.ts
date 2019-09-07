@@ -65,7 +65,7 @@ export class GameShellComponent implements OnInit, OnDestroy {
         });
 
         const ground = this.createGround(0, 0, 50000);
-        this._cart = this.createCart(50, -100, 40, 30, 10, 3, 10);
+        this._cart = this.createCart(100, -100, 75, 45, 10, 15, 15);
 
         World.add(this._engine.world, ground);
         World.add(this._engine.world, this._cart);
@@ -93,9 +93,9 @@ export class GameShellComponent implements OnInit, OnDestroy {
         Engine.run(this._engine);
         Render.run(this._render);
 
-        this.addCoins(50, -100, 15, 1000, 100)
+        this.addCoins(100, -150, 15, 1000, 100)
             .then(() => {
-                this._torque = 0.008;
+                this._torque = 0.025;
             })
     }
 
@@ -209,7 +209,9 @@ export class GameShellComponent implements OnInit, OnDestroy {
                     return;
                 }
 
-                const coin = Bodies.circle(x, y, 5);
+                const coin = Bodies.circle(x, y, 5, {
+                    slop: 0
+                });
                 World.add(this._engine.world, coin);
                 count++;
 
