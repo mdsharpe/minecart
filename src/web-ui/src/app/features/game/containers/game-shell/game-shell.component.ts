@@ -1,19 +1,38 @@
-import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, Input } from '@angular/core';
+import { Subject, Observable, interval, combineLatest } from 'rxjs';
+import { map, takeUntil } from 'rxjs/operators';
+
+import { StatsModel, WorldView } from '../../models';
+import { WorldService } from '../../services/world.service';
 
 @Component({
     selector: 'app-game',
     templateUrl: './game-shell.component.html',
     styleUrls: ['./game-shell.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: []
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GameShellComponent implements OnInit, OnDestroy {
-    constructor() { }
+    constructor(
+        private readonly _worldService: WorldService
+    ) {
+
+        this.stats = combineLatest(
+            this._worldService.world$,
+            interval(1000)
+        ).pipe(
+            takeUntil(this.unsubscribe$),
+            map((o) => {
+                return new StatsModel(o[0]);
+            })
+        );
+    }
 
     private readonly unsubscribe$ = new Subject<void>();
 
+    public stats: Observable<StatsModel>;
+
     public ngOnInit(): void {
+        this._worldService.init();
     }
 
     public ngOnDestroy(): void {
