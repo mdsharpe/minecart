@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, Input } from '@a
 import { Subject, Observable, interval, combineLatest } from 'rxjs';
 import { map, takeUntil } from 'rxjs/operators';
 
-import { StatsModel, WorldView } from '../../models';
+import { StatsModel } from '../../models';
 import { WorldService } from '../../services/world.service';
 
 @Component({
@@ -15,10 +15,9 @@ export class GameShellComponent implements OnInit, OnDestroy {
     constructor(
         private readonly _worldService: WorldService
     ) {
-
         this.stats = combineLatest(
             this._worldService.world$,
-            interval(1000)
+            interval(500)
         ).pipe(
             takeUntil(this.unsubscribe$),
             map((o) => {

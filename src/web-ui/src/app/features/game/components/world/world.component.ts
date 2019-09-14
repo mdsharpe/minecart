@@ -54,8 +54,8 @@ export class WorldComponent implements OnInit, OnDestroy {
                         Bounds.shift(
                             this._render.bounds,
                             {
-                                x: o.cart.bodies[0].position.x - window.innerWidth / 4,
-                                y: o.cart.bodies[0].position.y - window.innerHeight / 2
+                                x: o.cart.position.x - window.innerWidth / 4,
+                                y: o.cart.position.y - window.innerHeight / 2
                             });
                     }
                 });

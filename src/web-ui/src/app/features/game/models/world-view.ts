@@ -1,6 +1,6 @@
-import { Engine, World, Composite } from 'matter-js';
+import { Engine, Body } from 'matter-js';
 
 export interface WorldView {
     engine: Engine;
-    cart: Composite;  
+    cart: Body;  
 }

@@ -17,8 +17,8 @@ export class WorldService {
     public init(): void {
         this._engine = Engine.create();
 
-        const ground = this.createGround(0, 0, 50000);
-        this._cart = this.createCart(100, -100, 75, 45, 10, 10, 15);
+        const ground = this.createGround(-100, 0, 50000);
+        this._cart = this.createCart(0, -100, 75, 45, 10, 10, 15);
 
         World.add(this._engine.world, ground);
         World.add(this._engine.world, this._cart);
@@ -32,14 +32,14 @@ export class WorldService {
 
         Engine.run(this._engine);
 
-        this.addCoins(100, -150, 15, 1000, 100)
+        this.addCoins(0, -150, 15, 1000, 100)
             .then(() => {
                 this._torque = 0.025;
             });
 
         this.world$.next({
             engine: this._engine,
-            cart: this._cart
+            cart: this._cart.bodies[0]
         })
     }
 
