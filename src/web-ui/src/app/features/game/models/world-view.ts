@@ -1,6 +1,19 @@
 import { Engine, Body } from 'matter-js';
 
-export interface WorldView {
+export interface WorldViewOptions {
     engine: Engine;
-    cart: Body;  
+    cart: Body;
+    coins: Body[];
+}
+
+export class WorldView {
+    constructor(options: WorldViewOptions) {
+        this.engine = options.engine;
+        this.cart = options.cart;
+        this.coins = options.coins;
+    }
+
+    public readonly engine: Engine;
+    public readonly cart: Body;
+    public readonly coins: Body[];
 }

@@ -10,6 +10,7 @@ export class WorldService {
     private _coinCreateTimeoutId: number | null = null;
     private _engine: Engine | null = null;
     private _cart: Composite | null = null;
+    private _coins: Body[] = [];
     private _torque: number = 0;
 
     public readonly world$ = new BehaviorSubject<WorldView | null>(null);
@@ -37,10 +38,11 @@ export class WorldService {
                 this._torque = 0.025;
             });
 
-        this.world$.next({
+        this.world$.next(new WorldView({
             engine: this._engine,
-            cart: this._cart.bodies[0]
-        })
+            cart: this._cart.bodies[0],
+            coins: this._coins
+        }));
     }
 
     private createGround(x: number, y: number, width: number): Composite {
@@ -126,8 +128,6 @@ export class WorldService {
 
     private addCoins(x: number, y: number, quantity: number, delay: number, interval: number): Promise<void> {
         return new Promise<void>((resolve) => {
-            let count = 0;
-
             let clearCoinTimeout = () => {
                 if (this._coinCreateTimeoutId) {
                     window.clearTimeout(this._coinCreateTimeoutId);
@@ -157,9 +157,9 @@ export class WorldService {
                     slop: 0
                 });
                 World.add(this._engine.world, coin);
-                count++;
+                this._coins.push(coin);
 
-                if (count < quantity) {
+                if (this._coins.length < quantity) {
                     scheduleCoinCreation(interval);
                 } else {
                     resolve();

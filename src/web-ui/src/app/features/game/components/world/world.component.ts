@@ -1,6 +1,5 @@
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
 import { Render, Events, Bounds } from 'matter-js';
-import { WorldView } from '../../models';
 import { WorldService } from '../../services/world.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
