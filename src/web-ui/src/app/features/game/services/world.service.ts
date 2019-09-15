@@ -1,12 +1,18 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Engine, Bodies, World, Body, Composite, Vector, Constraint, Events } from 'matter-js';
+
 import { WorldView } from '../models/world-view';
+
+export interface WorldInitOptions {
+    recreateGround?: boolean;
+}
 
 @Injectable({
     providedIn: 'root'
 })
 export class WorldService {
+    private _ground: Composite | null = null;
     private _coinCreateTimeoutId: number | null = null;
     private _engine: Engine | null = null;
     private _cart: Composite | null = null;
@@ -15,13 +21,18 @@ export class WorldService {
 
     public readonly world$ = new BehaviorSubject<WorldView | null>(null);
 
-    public init(): void {
+    public init(options?: WorldInitOptions): void {
+        options = options || {};
+
+        if (options.recreateGround || this._ground === null) {
+            this._ground = this.createGround(-100, 0, 50000);
+        }
+
         this._engine = Engine.create();
 
-        const ground = this.createGround(-100, 0, 50000);
-        this._cart = this.createCart(0, -100, 75, 45, 10, 10, 15);
+        World.add(this._engine.world, this._ground);
 
-        World.add(this._engine.world, ground);
+        this._cart = this.createCart(0, -100, 75, 45, 10, 10, 15);
         World.add(this._engine.world, this._cart);
 
         Events.on(this._engine, 'afterUpdate', (e: Body) => {

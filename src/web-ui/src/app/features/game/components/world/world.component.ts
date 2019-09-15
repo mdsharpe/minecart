@@ -1,8 +1,9 @@
-import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
-import { Render, Events, Bounds } from 'matter-js';
-import { WorldService } from '../../services/world.service';
-import { takeUntil } from 'rxjs/operators';
+import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { Render, Events, Bounds } from 'matter-js';
+
+import { WorldService } from '../../services/world.service';
 
 @Component({
     selector: 'app-world',

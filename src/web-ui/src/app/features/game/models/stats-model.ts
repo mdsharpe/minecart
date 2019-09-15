@@ -1,5 +1,6 @@
+import { Vertices } from 'matter-js';
+
 import { WorldView } from './world-view';
-import { Bounds, Vertices } from 'matter-js';
 
 export class StatsModel {
     constructor(world: WorldView | null) {

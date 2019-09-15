@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
+
 import { StatsModel } from '../../models';
 
 @Component({

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
 import { Subject, Observable, interval, combineLatest } from 'rxjs';
 import { map, takeUntil } from 'rxjs/operators';
 
