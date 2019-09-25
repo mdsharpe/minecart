@@ -38,4 +38,10 @@ export class GameShellComponent implements OnInit, OnDestroy {
         this.unsubscribe$.next();
         this.unsubscribe$.complete();
     }
+
+    public resetButtonClick():void {
+        this._worldService.init({
+            recreateGround: false
+        })
+    }
 }

@@ -8,15 +8,22 @@ export interface WorldInitOptions {
     recreateGround?: boolean;
 }
 
+interface GroundSegment {
+    x: number;
+    y: number;
+    vertices: Vector[];
+}
+
 @Injectable({
     providedIn: 'root'
 })
 export class WorldService {
+    private readonly _groundPlot: GroundSegment[] = [];
+    private readonly _coins: Body[] = [];
     private _ground: Composite | null = null;
     private _coinCreateTimeoutId: number | null = null;
     private _engine: Engine | null = null;
     private _cart: Composite | null = null;
-    private _coins: Body[] = [];
     private _torque: number = 0;
 
     public readonly world$ = new BehaviorSubject<WorldView | null>(null);
@@ -24,11 +31,21 @@ export class WorldService {
     public init(options?: WorldInitOptions): void {
         options = options || {};
 
-        if (options.recreateGround || this._ground === null) {
-            this._ground = this.createGround(-100, 0, 50000);
+        if (this._engine) {
+            World.clear(this._engine.world, false);
+            Engine.clear(this._engine);
         }
 
+        this._coinCreateTimeoutId = null;
+        this._torque = 0;
+
         this._engine = Engine.create();
+
+        if (options.recreateGround || !this._groundPlot.length) {
+            this.plotGround(-100, 0, 50000);
+        }
+
+        this._ground = this.createGround();
 
         World.add(this._engine.world, this._ground);
 
@@ -44,6 +61,7 @@ export class WorldService {
 
         Engine.run(this._engine);
 
+        this._coins.length = 0;
         this.addCoins(0, -150, 15, 1000, 100)
             .then(() => {
                 this._torque = 0.025;
@@ -56,8 +74,8 @@ export class WorldService {
         }));
     }
 
-    private createGround(x: number, y: number, width: number): Composite {
-        const segments: Body[] = [];
+    private plotGround(x: number, y: number, width: number): void {
+        this._groundPlot.length = 0;
 
         const thickness = 20;
         const baseWidth = 200;
@@ -68,23 +86,38 @@ export class WorldService {
             const width = baseWidth + ((Math.random() * vWidth) - (vWidth / 2))
             const deltaY = (Math.random() * vY) - (vY / 2);
 
-            const segmentVertices: Vector[] = [
-                { x: 0, y: 0 },
-                { x: width, y: deltaY },
-                { x: width, y: deltaY + thickness },
-                { x: 0, y: thickness }
-            ];
+            this._groundPlot.push({
+                x: x + (width / 2),
+                y: y + (deltaY / 2),
+                vertices: [
+                    { x: 0, y: 0 },
+                    { x: width, y: deltaY },
+                    { x: width, y: deltaY + thickness },
+                    { x: 0, y: thickness }
+                ]
+            })
 
-            const segment = Bodies.fromVertices(x + (width / 2), y + (deltaY / 2), [segmentVertices], {
-                isStatic: true,
-                frictionStatic: 1
-            });
-
-            segments.push(segment);
             x += width;
             y += deltaY;
             vY += 5;
         } while (x <= width);
+    }
+
+    private createGround(): Composite {
+        const segments: Body[] = [];
+
+        for (const gps of this._groundPlot) {
+            const segment = Bodies.fromVertices(
+                gps.x,
+                gps.y,
+                [gps.vertices],
+                {
+                    isStatic: true,
+                    frictionStatic: 1
+                });
+
+            segments.push(segment);
+        }
 
         return Composite.create({
             bodies: segments

@@ -1,2 +1,7 @@
 <app-world class="world"></app-world>
-<app-stats class="stats" [stats]="stats | async"></app-stats>
+<div class="world-overlay">
+    <app-stats class="stats" [stats]="stats | async"></app-stats>
+    <div class="controls">
+        <button class="controls__button" (click)="resetButtonClick()">Reset</button>
+    </div>
+</div>

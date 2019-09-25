@@ -4,6 +4,7 @@ import { takeUntil } from 'rxjs/operators';
 import { Render, Events, Bounds } from 'matter-js';
 
 import { WorldService } from '../../services/world.service';
+import { WorldView } from '../../models';
 
 @Component({
     selector: 'app-world',
@@ -17,7 +18,9 @@ export class WorldComponent implements OnInit, OnDestroy {
     ) { }
 
     private readonly _unsubscribe$ = new Subject<void>();
+    private _world: WorldView | null = null;
     private _render: Render | null = null;
+    private _onBeforeTick: (() => void) | null = null;
 
     @ViewChild("worldContainer", { static: true })
     private _worldContainer: ElementRef<HTMLElement> | null = null;
@@ -27,44 +30,18 @@ export class WorldComponent implements OnInit, OnDestroy {
             .pipe(
                 takeUntil(this._unsubscribe$)
             )
-            .subscribe((o) => {
-                if (!o) {
-                    return;
+            .subscribe((world) => {
+                this.tearDownRender();
+
+                if (world) {
+                    this._world = world;
+                    this.setUpRender(world);
                 }
-
-                const container = this._worldContainer!.nativeElement;
-
-                var renderOptions = {
-                    showAngleIndicator: true,
-                    showVelocity: true,
-                    showCollisions: true,
-                    hasBounds: true,
-                    width: container.clientWidth,
-                    height: container.clientHeight
-                };
-
-                this._render = Render.create({
-                    element: container,
-                    engine: o.engine,
-                    options: <any>renderOptions
-                });
-
-                Events.on(o.engine, 'beforeTick', () => {
-                    if (this._render && o && o.cart) {
-                        Bounds.shift(
-                            this._render.bounds,
-                            {
-                                x: o.cart.position.x - window.innerWidth / 4,
-                                y: o.cart.position.y - window.innerHeight / 2
-                            });
-                    }
-                });
-
-                Render.run(this._render);
             });
     }
 
     public ngOnDestroy(): void {
+        this.tearDownRender();
         this._unsubscribe$.next();
         this._unsubscribe$.complete();
     }
@@ -80,6 +57,55 @@ export class WorldComponent implements OnInit, OnDestroy {
 
             this._render.canvas.width = container.clientWidth;
             this._render.canvas.height = container.clientHeight;
+        }
+    }
+
+    private setUpRender(world: WorldView): void {
+        const container = this._worldContainer!.nativeElement;
+
+        var renderOptions = {
+            showAngleIndicator: true,
+            showVelocity: true,
+            showCollisions: true,
+            hasBounds: true,
+            width: container.clientWidth,
+            height: container.clientHeight
+        };
+
+        this._render = Render.create({
+            element: container,
+            engine: world.engine,
+            options: <any>renderOptions
+        });
+
+        this._onBeforeTick = () => {
+            this.recenter();
+        };
+
+        Events.on(world.engine, 'beforeTick', this._onBeforeTick);
+
+        Render.run(this._render);
+    }
+
+    private tearDownRender(): void {
+        if (this._world && this._onBeforeTick) {
+            Events.off(this._world.engine, 'beforeTick', this._onBeforeTick);
+            this._onBeforeTick = null;
+        }
+        
+        if (this._render) {
+            Render.stop(this._render);
+            this._render.canvas.remove();
+            this._render.textures = {};
+        }
+    }
+
+    private recenter(): void {
+        if (this._render && this._world && this._world.cart) {
+            Bounds.shift(this._render.bounds, {
+                x: this._world.cart.position.x - window.innerWidth / 4,
+                y: this._world.cart.position.y - window.innerHeight / 2
+            });
         }
     }
 }
