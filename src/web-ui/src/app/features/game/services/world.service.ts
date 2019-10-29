@@ -3,10 +3,13 @@ import { BehaviorSubject } from 'rxjs';
 import { Engine, Bodies, World, Body, Composite, Vector, Constraint, Events } from 'matter-js';
 
 import { WorldView } from '../models/world-view';
+import { RecordsModel, RecordsModelOptions } from '../models';
 
 export interface WorldInitOptions {
     recreateGround?: boolean;
 }
+
+const CoinMaxCount = 15;
 
 interface GroundSegment {
     x: number;
@@ -27,11 +30,14 @@ export class WorldService {
     private _torque: number = 0;
 
     public readonly world$ = new BehaviorSubject<WorldView | null>(null);
+    public readonly records$ = new BehaviorSubject<RecordsModel | null>(null);
 
     public init(options?: WorldInitOptions): void {
         options = options || {};
 
         if (this._engine) {
+            this.records$.next(this.getRecords());
+
             World.clear(this._engine.world, false);
             Engine.clear(this._engine);
         }
@@ -62,15 +68,16 @@ export class WorldService {
         Engine.run(this._engine);
 
         this._coins.length = 0;
-        this.addCoins(0, -150, 15, 1000, 100)
+        this.addCoins(0, -150, CoinMaxCount, 1000, 100)
             .then(() => {
                 this._torque = 0.025;
             });
 
         this.world$.next(new WorldView({
             engine: this._engine,
-            cart: this._cart.bodies[0],
-            coins: this._coins
+            cart: this.getCart()!,
+            coins: this._coins,
+            coinMaxCount: CoinMaxCount
         }));
     }
 
@@ -212,6 +219,22 @@ export class WorldService {
 
             clearCoinTimeout();
             scheduleCoinCreation(delay);
+        });
+    }
+
+    private getCart(): Body | null {
+        return this._cart ? this._cart.bodies[0] : null;
+    }
+
+    private getRecords(): RecordsModel {
+        const cart = this.getCart();
+        const currentDist = cart ? cart.position.x : 0;
+
+        const prevRecords = this.records$.value;
+        const prevRecordDist = prevRecords ? prevRecords.distanceMax : 0;
+
+        return new RecordsModel({
+            distanceMax : Math.max(currentDist, prevRecordDist)
         });
     }
 }

@@ -17,11 +17,12 @@ export class GameShellComponent implements OnInit, OnDestroy {
     ) {
         this.stats = combineLatest(
             this._worldService.world$,
+            this._worldService.records$,
             interval(500)
         ).pipe(
             takeUntil(this.unsubscribe$),
             map((o) => {
-                return new StatsModel(o[0]);
+                return new StatsModel(o[0], o[1]);
             })
         );
     }
